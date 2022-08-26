@@ -7,6 +7,6 @@ import (
 
 func main() {
 	client := zabbix.New()
-	hostId := zabbix.GetHostId(client, "127.0.0.1")
+	hostId := zabbix.GetHostID(client, "127.0.0.1")
 	fmt.Println(hostId)
 }

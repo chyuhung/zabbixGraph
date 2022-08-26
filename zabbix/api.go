@@ -11,27 +11,27 @@ import (
 
 // JsonData 请求json结构体
 type JsonData struct {
-	Jsonrpc string                 `json:"jsonrpc,omitempty"`
+	JSONRpc string                 `json:"jsonrpc,omitempty"`
 	Method  string                 `json:"method,omitempty"`
 	Params  map[string]interface{} `json:"params,omitempty"`
-	Id      string                 `json:"id,omitempty"`
+	ID      string                 `json:"id,omitempty"`
 	Auth    string                 `json:"auth,omitempty"`
 }
 
-// GetJsonStr 构造json字符串
-func GetJsonStr(token string, method string, params map[string]interface{}) string {
+// GetJSONStr 构造json字符串
+func GetJSONStr(token string, method string, params map[string]interface{}) string {
 	var m = JsonData{
-		Jsonrpc: "2.0",
+		JSONRpc: "2.0",
 		Method:  method,
 		Params:  params,
-		Id:      "1",
+		ID:      "1",
 		Auth:    token,
 	}
-	jsonStr, err := json.Marshal(m)
+	js, err := json.Marshal(m)
 	if err != nil {
 		fmt.Println(err)
 	}
-	return string(jsonStr)
+	return string(js)
 }
 
 /*
@@ -44,8 +44,8 @@ type Params struct {
 }
 */
 
-// RequestJson 通过json请求数据，结果为string类型
-func RequestJson(json string, url string) string {
+// RequestJSON 通过json请求数据，结果为string类型
+func RequestJSON(json string, url string) string {
 	request := gorequest.New()
 	_, body, errs := request.Post(url).
 		Set("Content-Type", "application/json").
@@ -53,36 +53,28 @@ func RequestJson(json string, url string) string {
 		Timeout(3 * time.Second).
 		End()
 	if errs != nil {
-		fmt.Println("请求错误:", errs)
+		fmt.Println("请求失败:", errs)
 		os.Exit(1)
 	}
 	return body
 }
 
-/*
-// JsonBody 响应json结构体
-type JsonBody struct {
-	JsonRpc string                 `json:"jsonrpc"`
-	Result  map[string]interface{} `json:"result"`
-	Id      string                 `json:"id"`
-}
-*/
-
-func GetJsonValue(jsonBody string, key string) interface{} {
-	var m = map[string]interface{}{}
-	err := json.Unmarshal([]byte(jsonBody), &m)
-	if err != nil {
-		fmt.Println("获取错误:", err)
+// GetHostID 通过ip获取hostid
+func GetHostID(c *Client, ip string) string {
+	type JSONBody struct {
+		JSONRpc string              `json:"JSONRpc,omitempty"`
+		Result  []map[string]string `json:"result,omitempty"`
+		ID      string              `json:"ID,omitempty"`
 	}
-	return m[key]
-}
-
-// GetHostId 通过ip获取hostid
-func GetHostId(c *Client, ip string) interface{} {
 	filter := map[string]interface{}{"ip": ip}
-	params := map[string]interface{}{"output": "", "filter": filter}
-	reqJson := GetJsonStr(c.token, "host.get", params)
-	body := RequestJson(reqJson, utils.ApiJsonRpcUrl)
-	m := GetJsonValue(body, "result")
-	return m
+	host := []string{"hostid"}
+	params := map[string]interface{}{"output": host, "filter": filter}
+	rj := GetJSONStr(c.token, "host.get", params)
+	body := RequestJSON(rj, utils.ApiJSONRpcURL)
+	var jb = JSONBody{}
+	err := json.Unmarshal([]byte(body), &jb)
+	if err != nil {
+		fmt.Println("解析错误:", err)
+	}
+	return jb.Result[0]["hostid"]
 }
