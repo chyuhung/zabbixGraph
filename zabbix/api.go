@@ -67,14 +67,59 @@ func GetHostID(c *Client, ip string) string {
 		ID      string              `json:"ID,omitempty"`
 	}
 	filter := map[string]interface{}{"ip": ip}
-	host := []string{"hostid"}
-	params := map[string]interface{}{"output": host, "filter": filter}
+	params := map[string]interface{}{"output": []string{"host"}, "filter": filter}
 	rj := GetJSONStr(c.token, "host.get", params)
-	body := RequestJSON(rj, utils.ApiJSONRpcURL)
+	body := RequestJSON(rj, utils.ApiRpcURL)
 	var jb = JSONBody{}
 	err := json.Unmarshal([]byte(body), &jb)
 	if err != nil {
 		fmt.Println("解析错误:", err)
 	}
 	return jb.Result[0]["hostid"]
+}
+func GetGraphID(c *Client, hostID string, graphList []string) string {
+	type JSONBody struct {
+		JSONRpc string
+		Result  []map[string]string
+		ID      string
+	}
+	filter := map[string]interface{}{"name": graphList}
+	params := map[string]interface{}{"output": []string{"graphid"}, "hostids": hostID, "filter": filter}
+	rj := GetJSONStr(c.token, "graph.get", params)
+	body := RequestJSON(rj, utils.ApiRpcURL)
+	var jb = JSONBody{}
+	err := json.Unmarshal([]byte(body), &jb)
+	if err != nil {
+		fmt.Println("解析失败:", err)
+	}
+	return jb.Result[0]["graphid"]
+}
+
+// GetGraph 下载图片
+func GetGraph(c *Client, filename string, graphID string, timeFrom string, timeTo string, width string, height string) {
+	//var v = map[string]interface{}{"graphid": graphID, "from": timeFrom, "to": timeTo, "width": width, "height": height, "profileIdx": "web.charts.filter"}
+	request := gorequest.New()
+	_, body, errs := request.Get(utils.GraphURL).
+		Query("graphid=" + graphID).
+		Query("from=" + timeFrom).
+		Query("to=" + timeTo).
+		Query("width=" + width).
+		Query("height=" + height).
+		Query("profileIdx=" + "web.charts.filter").
+		AddCookies(c.cookies).
+		End()
+	if errs != nil {
+		fmt.Println("请求失败:", errs)
+		os.Exit(1)
+	}
+	f, err := os.Create(utils.DownloadDir + filename + ".png")
+	if err != nil {
+		fmt.Println("创建文件失败:", err)
+	}
+	defer f.Close()
+	_, err = f.Write([]byte(body))
+	if err != nil {
+		fmt.Println("写文件失败:", err)
+	}
+
 }

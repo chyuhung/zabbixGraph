@@ -6,12 +6,14 @@ import (
 )
 
 var (
-	Server        string
-	Port          string
-	User          string
-	Password      string
-	ApiJSONRpcURL string
-	GraphURL      string
+	Server      string
+	Port        string
+	User        string
+	Password    string
+	ApiRpcURL   string
+	GraphURL    string
+	LoginURL    string
+	DownloadDir string
 )
 
 func loadData(file *ini.File) {
@@ -19,8 +21,10 @@ func loadData(file *ini.File) {
 	Port = file.Section("zabbix").Key("Port").MustString(":80")
 	User = file.Section("zabbix").Key("User").MustString("Admin")
 	Password = file.Section("zabbix").Key("Password").MustString("zabbix")
-	ApiJSONRpcURL = "http://" + Server + Port + "/zabbix/api_jsonrpc.php"
+	ApiRpcURL = "http://" + Server + Port + "/zabbix/api_jsonrpc.php"
 	GraphURL = "http://" + Server + Port + "/zabbix/chart2.php"
+	LoginURL = "http://" + Server + Port + "/zabbix/index.php"
+	DownloadDir = file.Section("config").Key("DownloadDir").MustString("images")
 }
 func init() {
 	file, err := ini.Load("config/config.ini")
