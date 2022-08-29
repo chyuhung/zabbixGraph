@@ -10,6 +10,8 @@ import (
 	"zabbixGraph/utils"
 )
 
+var Browser = New()
+
 type Client struct {
 	token   string
 	cookies []*http.Cookie

@@ -3,17 +3,24 @@ package utils
 import (
 	"fmt"
 	"gopkg.in/ini.v1"
+	"strings"
 )
 
 var (
-	Server      string
-	Port        string
-	User        string
-	Password    string
-	ApiRpcURL   string
-	GraphURL    string
-	LoginURL    string
-	DownloadDir string
+	Server        string
+	Port          string
+	User          string
+	Password      string
+	ApiRpcURL     string
+	GraphURL      string
+	LoginURL      string
+	DownloadDir   string
+	Width         string
+	Height        string
+	TimeFrom      string
+	TimeTo        string
+	HostsFile     string
+	GraphNameList []string
 )
 
 func loadData(file *ini.File) {
@@ -24,7 +31,14 @@ func loadData(file *ini.File) {
 	ApiRpcURL = "http://" + Server + Port + "/zabbix/api_jsonrpc.php"
 	GraphURL = "http://" + Server + Port + "/zabbix/chart2.php"
 	LoginURL = "http://" + Server + Port + "/zabbix/index.php"
-	DownloadDir = file.Section("config").Key("DownloadDir").MustString("images")
+	DownloadDir = file.Section("config").Key("DownloadDir").MustString("img")
+	Width = file.Section("graph").Key("Width").MustString("1000")
+	Height = file.Section("graph").Key("Height").MustString("800")
+	TimeFrom = file.Section("graph").Key("TimeFrom").MustString("now-1h")
+	TimeTo = file.Section("graph").Key("TimeTo").MustString("now")
+	HostsFile = file.Section("config").Key("HostsFile").MustString("hosts.txt")
+	graphNameListStr := file.Section("graph").Key("GraphNameList").MustString("CPU utilization")
+	GraphNameList = strings.Split(graphNameListStr, ",")
 }
 func init() {
 	file, err := ini.Load("config/config.ini")
