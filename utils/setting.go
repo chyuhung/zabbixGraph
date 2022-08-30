@@ -21,11 +21,12 @@ var (
 	TimeTo        string
 	HostsFile     string
 	GraphNameList []string
+	UserAgent     string
 )
 
 func loadData(file *ini.File) {
 	Server = file.Section("zabbix").Key("Server").MustString("10.191.101.101")
-	Port = file.Section("zabbix").Key("Port").MustString(":80")
+	Port = ":" + file.Section("zabbix").Key("Port").MustString("80")
 	User = file.Section("zabbix").Key("User").MustString("Admin")
 	Password = file.Section("zabbix").Key("Password").MustString("zabbix")
 	ApiRpcURL = "http://" + Server + Port + "/zabbix/api_jsonrpc.php"
@@ -39,6 +40,7 @@ func loadData(file *ini.File) {
 	HostsFile = file.Section("config").Key("HostsFile").MustString("hosts.txt")
 	graphNameListStr := file.Section("graph").Key("GraphNameList").MustString("CPU utilization")
 	GraphNameList = strings.Split(graphNameListStr, ",")
+	UserAgent = file.Section("config").Key("UserAgent").MustString("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0")
 }
 func init() {
 	file, err := ini.Load("config/config.ini")
@@ -46,4 +48,19 @@ func init() {
 		fmt.Println("配置文件读取错误:", err)
 	}
 	loadData(file)
+	fmt.Println("读取的配置信息:")
+	fmt.Println("Server:", Server)
+	fmt.Println("Port:", Port)
+	fmt.Println("User", User)
+	fmt.Println("Password:", Password)
+	fmt.Println("ApiRpcURL:", ApiRpcURL)
+	fmt.Println("GraphURL:", GraphURL)
+	fmt.Println("LoginURL:", LoginURL)
+	fmt.Println("DownloadDir:", DownloadDir)
+	fmt.Println("Width:", Width)
+	fmt.Println("Height:", Height)
+	fmt.Println("TimeFrom:", TimeFrom)
+	fmt.Println("TimeTo:", TimeTo)
+	fmt.Println("HostFile:", HostsFile)
+	fmt.Println("GraphNameList:", GraphNameList)
 }

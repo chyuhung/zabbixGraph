@@ -1,7 +1,9 @@
 package main
 
-import "zabbixGraph/zabbix"
+import (
+	"zabbixGraph/zabbix"
+)
 
 func main() {
-	zabbix.DownloadGraph("10.191.101.101")
+	zabbix.DownloadGraph()
 }

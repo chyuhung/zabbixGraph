@@ -73,14 +73,14 @@ func GetHostID(c *Client, ip string) string {
 		return jb.Result[0]["hostid"]
 	}
 }
-func GetGraphID(c *Client, hostID string, graphList []string) string {
+func GetGraphID(c *Client, hostID string, graphList []string) []map[string]string {
 	type JSONBody struct {
 		JSONRpc string
 		Result  []map[string]string
 		ID      string
 	}
 	filter := map[string]interface{}{"name": graphList}
-	params := map[string]interface{}{"output": []string{"graphid"}, "hostids": hostID, "filter": filter}
+	params := map[string]interface{}{"output": []string{"graphid", "name"}, "hostids": hostID, "filter": filter}
 	rj := GetJSONStr(c.token, "graph.get", params)
 	body := RequestJSON(rj, utils.ApiRpcURL)
 	var jb = JSONBody{}
@@ -90,9 +90,9 @@ func GetGraphID(c *Client, hostID string, graphList []string) string {
 	}
 	if len(jb.Result) == 0 {
 		fmt.Println("获取graphid失败,hostid:", hostID)
-		return ""
+		return nil
 	} else {
-		return jb.Result[0]["graphid"]
+		return jb.Result
 	}
 }
 
@@ -106,7 +106,7 @@ func GetFilename(name string) string {
 }
 
 // GetGraph 下载图片
-func GetGraph(c *Client, ip string, graphID string) {
+func GetGraph(c *Client, ip string, graphID string, graphName string) {
 	request := gorequest.New()
 	_, body, errs := request.Get(utils.GraphURL).
 		Query("graphid=" + graphID).
@@ -121,7 +121,7 @@ func GetGraph(c *Client, ip string, graphID string) {
 		fmt.Println("请求失败:", errs)
 		os.Exit(1)
 	}
-	f, err := os.Create(utils.DownloadDir + "/" + ip + ".png")
+	f, err := os.Create(utils.DownloadDir + "/" + ip + "-" + GetFilename(graphName) + ".png")
 	if err != nil {
 		fmt.Println("创建文件失败:", err)
 	}
@@ -151,53 +151,21 @@ func GetHostList(filename string) []string {
 	}
 }
 
-/*
-// GetHostIDs 通过ip获取hostid
-func GetHostIDs(c *Client, ip []string) map[string]string {
-	type JSONBody struct {
-		JSONRpc string              `json:"JSONRpc,omitempty"`
-		Result  []map[string]string `json:"result,omitempty"`
-		ID      string              `json:"ID,omitempty"`
-	}
-	filter := map[string]interface{}{"host": ip}
-	params := map[string]interface{}{"output": []string{"host"}, "filter": filter}
-	rj := GetJSONStr(c.token, "host.get", params)
-	body := RequestJSON(rj, utils.ApiRpcURL)
-	var jb = JSONBody{}
-	err := json.Unmarshal([]byte(body), &jb)
-	if err != nil {
-		fmt.Println("解析错误:", err)
-	}
-	if len(jb.Result) == 0 {
-		fmt.Println("获取hostids失败")
-		return nil
-	} else {
-		return jb.Result[0]
-	}
-}
-func GetHostIDsMap() map[string]string {
-	hostsList := GetHostList(utils.HostsFile)
-	hostsIDMap := GetHostIDs(Browser, hostsList)
-	if len(hostsIDMap) == 0 {
-		fmt.Println("获取hostid失败")
-		return nil
-	} else {
-		return hostsIDMap
-	}
-}
-*/
-
-func DownloadGraph(ip string) {
+func DownloadGraph() {
 	hostList := GetHostList(utils.HostsFile)
 	for _, ip := range hostList {
 		hostID := GetHostID(Browser, ip)
 		if hostID != "" {
 			fmt.Println("ip:----------", ip)
 			fmt.Println("hostid:", hostID)
-			graphID := GetGraphID(Browser, hostID, utils.GraphNameList)
-			if graphID != "" {
-				fmt.Println("graphid:", graphID)
-				GetGraph(Browser, ip, graphID)
+			graphMaps := GetGraphID(Browser, hostID, utils.GraphNameList)
+			for i, _ := range graphMaps {
+				graphID := graphMaps[i]["graphid"]
+				graphName := graphMaps[i]["name"]
+				if graphID != "" {
+					fmt.Println("graphid:", graphID)
+					GetGraph(Browser, ip, graphID, graphName)
+				}
 			}
 		}
 	}
