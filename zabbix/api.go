@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/parnurzeal/gorequest"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	"zabbixGraph/utils"
@@ -105,6 +106,18 @@ func GetFilename(name string) string {
 	return filename
 }
 
+func createFile(filePath string, data []byte) {
+	f, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println("创建文件失败:", err)
+	}
+	defer f.Close()
+	_, err = f.Write(data)
+	if err != nil {
+		fmt.Println("写文件失败:", err)
+	}
+}
+
 // GetGraph 下载图片
 func GetGraph(c *Client, ip string, graphID string, graphName string) {
 	request := gorequest.New()
@@ -121,17 +134,21 @@ func GetGraph(c *Client, ip string, graphID string, graphName string) {
 		fmt.Println("请求失败:", errs)
 		os.Exit(1)
 	}
-	f, err := os.Create(utils.DownloadDir + "/" + ip + "-" + GetFilename(graphName) + ".png")
-	if err != nil {
-		fmt.Println("创建文件失败:", err)
-	}
-	defer f.Close()
-	_, err = f.Write([]byte(body))
-	if err != nil {
-		fmt.Println("写文件失败:", err)
-	}
+	createFile(utils.DownloadDir+"/"+ip+"-"+GetFilename(graphName)+".png", []byte(body))
+
 }
 
+func replaceNR(s string) string {
+	for {
+		if strings.HasSuffix(s, "\n") || strings.HasSuffix(s, "\r") {
+			s = strings.ReplaceAll(s, "\n", "")
+			s = strings.ReplaceAll(s, "\r", "")
+		} else {
+			return s
+		}
+	}
+	return s
+}
 func GetHostList(filename string) []string {
 	data, err := os.ReadFile(filename)
 	if err != nil {
@@ -144,26 +161,29 @@ func GetHostList(filename string) []string {
 		hostsStr := string(data)
 		hostsList := strings.SplitAfter(hostsStr, "\n")
 		for i, _ := range hostsList {
-			hostsList[i] = strings.ReplaceAll(hostsList[i], "\r", "")
-			hostsList[i] = strings.ReplaceAll(hostsList[i], "\n", "")
+			hostsList[i] = replaceNR(hostsList[i])
 		}
 		return hostsList
 	}
 }
 
 func DownloadGraph() {
+	t, err := strconv.Atoi(utils.DownloadSpeed)
+	if err != nil {
+		fmt.Println(err)
+	}
 	hostList := GetHostList(utils.HostsFile)
 	for _, ip := range hostList {
 		hostID := GetHostID(Browser, ip)
 		if hostID != "" {
-			fmt.Println("ip:----------", ip)
-			fmt.Println("hostid:", hostID)
+			fmt.Printf("------------------------------\n%s\nhostid:%s\n", ip, hostID)
 			graphMaps := GetGraphID(Browser, hostID, utils.GraphNameList)
 			for i, _ := range graphMaps {
 				graphID := graphMaps[i]["graphid"]
 				graphName := graphMaps[i]["name"]
 				if graphID != "" {
-					fmt.Println("graphid:", graphID)
+					fmt.Printf("graphid:%s %s\n", graphID, graphName)
+					time.Sleep(time.Duration(t) * time.Second)
 					GetGraph(Browser, ip, graphID, graphName)
 				}
 			}

@@ -21,7 +21,7 @@ var (
 	TimeTo        string
 	HostsFile     string
 	GraphNameList []string
-	UserAgent     string
+	DownloadSpeed string
 )
 
 func loadData(file *ini.File) {
@@ -29,18 +29,20 @@ func loadData(file *ini.File) {
 	Port = ":" + file.Section("zabbix").Key("Port").MustString("80")
 	User = file.Section("zabbix").Key("User").MustString("Admin")
 	Password = file.Section("zabbix").Key("Password").MustString("zabbix")
-	ApiRpcURL = "http://" + Server + Port + "/zabbix/api_jsonrpc.php"
-	GraphURL = "http://" + Server + Port + "/zabbix/chart2.php"
-	LoginURL = "http://" + Server + Port + "/zabbix/index.php"
+	ApiRpcURL = "http://" + Server + Port + file.Section("zabbix").Key("ApiURL").MustString("/zabbix/api_jsonrpc.php")
+	GraphURL = "http://" + Server + Port + file.Section("zabbix").Key("GraphURL").MustString("/zabbix/chart2.php")
+	LoginURL = "http://" + Server + Port + file.Section("zabbix").Key("LoginURL").MustString("/zabbix/index.php")
 	DownloadDir = file.Section("config").Key("DownloadDir").MustString("img")
-	Width = file.Section("graph").Key("Width").MustString("1000")
-	Height = file.Section("graph").Key("Height").MustString("800")
+	HostsFile = file.Section("config").Key("HostsFile").MustString("hosts.txt")
+	DownloadSpeed = file.Section("config").Key("DownloadSpeed").MustString("0")
+	Width = file.Section("graph").Key("Width").MustString("600")
+	Height = file.Section("graph").Key("Height").MustString("200")
 	TimeFrom = file.Section("graph").Key("TimeFrom").MustString("now-1h")
 	TimeTo = file.Section("graph").Key("TimeTo").MustString("now")
-	HostsFile = file.Section("config").Key("HostsFile").MustString("hosts.txt")
-	graphNameListStr := file.Section("graph").Key("GraphNameList").MustString("CPU utilization")
-	GraphNameList = strings.Split(graphNameListStr, ",")
-	UserAgent = file.Section("config").Key("UserAgent").MustString("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0")
+	GraphNameList = strings.Split(file.Section("graph").Key("GraphNameList").MustString("CPU utilization"), ",")
+}
+func printConfig(s []string) {
+	fmt.Printf("%s\n", s)
 }
 func init() {
 	file, err := ini.Load("config/config.ini")
@@ -48,19 +50,6 @@ func init() {
 		fmt.Println("配置文件读取错误:", err)
 	}
 	loadData(file)
-	fmt.Println("读取的配置信息:")
-	fmt.Println("Server:", Server)
-	fmt.Println("Port:", Port)
-	fmt.Println("User", User)
-	fmt.Println("Password:", Password)
-	fmt.Println("ApiRpcURL:", ApiRpcURL)
-	fmt.Println("GraphURL:", GraphURL)
-	fmt.Println("LoginURL:", LoginURL)
-	fmt.Println("DownloadDir:", DownloadDir)
-	fmt.Println("Width:", Width)
-	fmt.Println("Height:", Height)
-	fmt.Println("TimeFrom:", TimeFrom)
-	fmt.Println("TimeTo:", TimeTo)
-	fmt.Println("HostFile:", HostsFile)
-	fmt.Println("GraphNameList:", GraphNameList)
+	printConfig([]string{Server, Port, User, Password, ApiRpcURL, GraphURL, LoginURL, DownloadDir, Width, Height, TimeFrom, TimeTo, HostsFile, DownloadSpeed})
+	printConfig(GraphNameList)
 }
